@@ -1,0 +1,29 @@
+const http = require('http');
+
+const PORT = process.env.PORT || 3000;
+
+function requestHandler(req, res) {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(
+    JSON.stringify({
+      message: 'Hello from devops/nodejs-app',
+      timestamp: new Date().toISOString(),
+    })
+  );
+}
+
+const server = http.createServer(requestHandler);
+
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = { requestHandler };

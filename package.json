@@ -1,0 +1,22 @@
+{
+  "name": "devops-nodejs-app",
+  "version": "1.0.0",
+  "description": "Standalone Node.js app for CI/CD and AWS learning",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "node --check src/index.js && node --check test/index.test.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "nodejs",
+    "devops",
+    "ci-cd",
+    "aws"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
