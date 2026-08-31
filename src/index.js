@@ -1,7 +1,7 @@
 const http = require('http');
 
 const PORT = process.env.PORT || 3000;
-
+console.log("Hello....")
 function requestHandler(req, res) {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
