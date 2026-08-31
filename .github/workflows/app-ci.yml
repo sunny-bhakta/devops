@@ -1,4 +1,4 @@
-name: app-ci
+name: CI
 
 on:
   pull_request:
@@ -7,9 +7,20 @@ on:
       - main
   workflow_dispatch:
 
+# Cancel superseded runs on the same branch to save Actions minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  ci:
+  build-and-test:
+    # This exact string is what appears as the required status check.
+    name: build-and-test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
