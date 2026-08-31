@@ -1,4 +1,4 @@
-# Standalone Node.js App (inside `devops`)
+#  Node.js App
 
 This is a separate, minimal Node.js app for CI/CD and AWS deployment practice.
 
