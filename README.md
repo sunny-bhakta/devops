@@ -1,4 +1,8 @@
-# Standalone Node.js App (inside `devops`)
+# Standalone Node.js App
+
+[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml)
+
+> Replace `<OWNER>` and `<REPO>` with your GitHub username and repository name.
 
 This is a separate, minimal Node.js app for CI/CD and AWS deployment practice.
 
