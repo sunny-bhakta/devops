@@ -1,19 +1,29 @@
-# DevOps Learning Plan (CI/CD + AWS) for This JavaScript Repo
+# Archived Backup (Do Not Use)
 
-This is the main roadmap for building production-ready DevOps skills with this
-Node.js repository, from CI basics to cloud deployment, security, and
-observability.
+This file is kept only as historical backup content.
 
-## Related references:
+Use active docs instead:
 
-- Full maturity backlog: [`MATURITY_GAP_ANALYSIS.md`](./depth/MATURITY_GAP_ANALYSIS.md)
-- Teardown playbook: [`TEARDOWN_RUNBOOK.md`](./depth/TEARDOWN_RUNBOOK.md)
+- Main roadmap: [`docs/README.md`](../README.md)
+- Cost policy: [`COST_CONTROL.md`](./COST_CONTROL.md)
+- Week 4 execution: [`WEEK4_AWS_SETUP.md`](./WEEK4_AWS_SETUP.md)
+
+## How to use this guide
+
+1. Follow week-by-week in order.
+2. Tick checkboxes only after you complete the task yourself.
+3. Keep evidence screenshots in `docs/images/` as you progress.
+
+Related references:
+
+- Inventory of ahead-of-schedule work: [`COMPLETED_AHEAD.md`](./COMPLETED_AHEAD.md)
+- Full maturity backlog: [`MATURITY_GAP_ANALYSIS.md`](./MATURITY_GAP_ANALYSIS.md)
 
 ## Quick navigation
 
 - [Prerequisites](#prerequisites-do-these-before-week-1)
 - [Progress Tracker](#progress-tracker)
-- [Free-account guardrails](#aws-free-plan-guardrails-read-this-first)
+- [Cost mode and guardrails](#pick-your-cost-mode--read-this-first)
 - [Success Contract](#success-contract)
 - [Architecture choices](#do-we-need-serverproxyreverse-proxynginxload-balancerhttps)
 - [Phase 1 (Weeks 1-8)](#phase-1--depth-weeks-18)
@@ -43,8 +53,8 @@ Use this table for quick weekly status updates.
 | Week 1 | CI Fundamentals | Done | 100% |
 | Week 2 | Code Quality + Faster Feedback | Done | 100% |
 | Week 3 | Dockerize the app | Done | 100% |
-| Week 4 | AWS Foundation + ECR | In progress | 60% |
-| Week 5 | Deploy to ECS Fargate + ALB (Staging) | In progress | 30% |
+| Week 4 | AWS Foundation + ECR | Not started | 0% |
+| Week 5 | Deploy to ECS Fargate + ALB (Staging) | Not started | 0% |
 | Week 6 | Secrets + Configuration + Security | Not started | 0% |
 | Week 7 | Safe Production Delivery | Not started | 0% |
 | Week 8 | Observability + Incident Drill | Not started | 0% |
@@ -62,26 +72,47 @@ Phase 2 runs entirely locally at $0.
 Use this combo for learning:
 
 - **GitHub Free** for source + Actions (make the repo **public** → unlimited free Actions minutes).
-- **AWS Free plan account** — follow the guardrails below.
+- **AWS new-account Free plan** with credits — see *Pick your cost mode* below.
 - **Docker Desktop** locally.
 - **Terraform OR AWS CDK** (pick one; don't mix initially).
 
 > Recommendation: Start with **AWS CDK (TypeScript)** — it gives you typed infra and reuses your JS/Node toolchain. Choose Terraform instead only if your target job market demands it.
 
-## AWS Free plan guardrails (read this first)
+## Pick your cost mode — read this first
 
-Full cost playbook: [`COST_CONTROL.md`](./depth/COST_CONTROL.md)
+Full cost playbook: [`COST_CONTROL.md`](./COST_CONTROL.md)
 
-This plan assumes one path: AWS Free plan with strict cost guardrails.
+Two variants of the same 12-week plan. The weeks, deliverables and definitions
+of done are identical; only the Week 5 deployment path and the guardrail
+posture differ.
 
-Why this path first:
+- [ ] **Mode A — Budget mode** *(free tier expired, real money from resource one)*
+- [x] **Mode B — Credit mode** *(new AWS account with sign-up credits)* ← **active**
+
+Mode B is active. Mode A stays documented as the fallback for when credits run
+out — at that point every Mode A rule applies again immediately.
+
+| | Mode A — Budget | Mode B — Credit |
+|---|---|---|
+| Account | Free tier expired | New account with credits |
+| Account plan | Paid | **Free plan** recommended |
+| Budget | $0–5 real money | $0 out of pocket; credits absorb it |
+| At the limit | You get billed | Account restricted, no charge |
+| Week 5 path | **Path A** (Lambda + Function URL) | **Path B viable** (ECS Fargate + ALB) |
+| Staging lifetime | Destroy every session | Can stay up for days |
+| ALB (~$17/mo) | Avoid | Acceptable, still tear down |
+| NAT Gateway (~$32/mo) | **Never** | **Never** |
+| Main risk | Surprise charge | Credit expiry cliff |
+
+
+Why Free plan first:
 
 - It makes overspending **structurally impossible**, not just unlikely. That is
   a stronger guarantee than any budget alert.
 - Your entire 12-week plan fits inside 6 months with room to spare.
 - Phase 2 (Weeks 9–12) is local, so it is unaffected either way.
 
-Trade-offs to keep in mind:
+The trade-off — read this before choosing:
 
 - **Account restriction is abrupt.** When credits run out, resources stop
   rather than bill. Take screenshots as you go; do not leave evidence-gathering
@@ -89,27 +120,80 @@ Trade-offs to keep in mind:
 - Some services are unavailable or capped on the Free plan. Everything this
   plan needs (ECR, ECS Fargate, Lambda, ALB, CloudWatch, SSM, IAM) is
   available, but **verify before relying on it**.
-- If you later want to keep a portfolio environment running, you may need to
-  upgrade to Paid; monitor spend and teardown discipline closely.
+- If you later want to keep a portfolio environment running, you must upgrade
+  to the Paid plan — at which point every Mode A rule applies immediately.
 
-> Switching Free → Paid is easy. Recovering from a surprise bill is not.
+> Switching Free → Paid is easy. Recovering from a surprise bill is not. Start
+> restricted.
 
-### Required rules
+### Shared rules (both modes)
 
 1. **Never create a NAT Gateway** (~$32/mo). No learning value at any budget.
 2. **Destroy everything at the end of every session** (`cdk destroy --all` /
    `terraform destroy`). Credits do not make forgotten resources free — they
    just delay the invoice.
-3. **Set budgets anyway.** Billing surprises usually come from forgotten
-  always-on resources.
+3. **Set both budgets anyway.** Credits mask spend until they run out, after
+   which billing is silent and immediate.
 
 Do this before creating any AWS resource:
 
-- [x] Create a **zero-spend budget** alert (Billing → Budgets → *Zero spend budget* template)
-- [x] Create a second budget at **$5/month** with 50/80/100% alerts
-- [x] Enable **Cost Explorer**
+- [ ] Create a **zero-spend budget** alert (Billing → Budgets → *Zero spend budget* template)
+- [ ] Create a second budget at **$5/month** with 50/80/100% alerts
+- [ ] Enable **Cost Explorer**
 - [ ] Tag every resource `project=devops-learning`, `env=dev`
-- [x] Keep reminders for credit/free-plan expiry and review spend weekly
+
+### Mode A — Budget mode (fallback, when credits run out)
+
+Target: finish Phase 1 (Weeks 1–8) for **$0–5 total**.
+
+- [ ] Default to the **serverless path** — Lambda + Function URL, not ECS + ALB.
+      Lambda's 1M requests/month is *Always Free*, so it applies without a new
+      account.
+- [ ] Never leave an **ALB** running (~$17/mo).
+- [ ] Treat Week 5 Path B as a single timeboxed exercise: build, screenshot,
+      destroy.
+
+| Path | Weeks 4–8 monthly cost |
+|---|---|
+| Serverless (Lambda + Function URL) — **recommended** | ~$0 |
+| ECS Fargate + ALB, destroyed after each session | ~$0.10 |
+| ECS Fargate + ALB left running | **$25–35** ← avoid |
+
+### Mode B — Credit mode (ACTIVE)
+
+Target: **$0 out of pocket**, and zero running resources when credits expire.
+
+Record these at sign-up:
+
+| Field | Value |
+|---|---|
+| Account plan (Free / Paid) | `______________` |
+| Credit amount | `______________` |
+| Credit expiry date | `______________` |
+| Reminder set for expiry − 2 weeks | `[ ]` |
+
+What credits unlock — genuinely hard to learn in a 30-minute session:
+
+- [ ] Leave staging (ECS Fargate + ALB) running for a few days.
+- [ ] Watch ALB health checks reject a bad deploy in real time.
+- [ ] Do a real blue/green target-group switch.
+- [ ] Trigger auto-scaling under a `k6` / `autocannon` load test.
+- [ ] Let CloudWatch alarms fire on actual traffic.
+- [ ] Run a private repo without worrying about Actions minutes *(still prefer
+      public — unlimited and free)*.
+
+Credit-specific guardrails:
+
+- [ ] Calendar reminder at **expiry minus 2 weeks**
+- [ ] Track credit burn weekly in Billing → Credits
+- [ ] Still tag and still tear down — an ALB left up for six months quietly
+      consumes $100
+- [ ] **Full teardown before credits expire** (also listed in Week 8)
+- [ ] Know the Mode A fallback rules for the day credits run out
+
+> The risk in Mode B is not overspending — it is *forgetting*. Most surprise
+> AWS bills come from resources created during a credit period and never
+> deleted. When credits run out, fall back to Mode A rules.
 
 ## Success Contract
 
@@ -117,7 +201,7 @@ By the end, you must have:
 
 1. CI checks on pull requests (`build`, `test`, and lint if added).
 2. Docker image build + push to ECR.
-3. Staging deployment to ECS Fargate behind an ALB.
+3. Staging deployment to ECS Fargate behind an ALB (Mode B), or Lambda (Mode A).
 4. Production gate with manual approval + rollback strategy documented.
 5. Basic monitoring with CloudWatch alarms.
 6. Screenshots in `docs/images/` proving each of the above ran — captured
@@ -129,40 +213,123 @@ Short answer: **not all at once**. Start with the minimum production-safe stack.
 
 | Component | Needed now? | Why | Recommendation |
 |---|---|---|---|
-| App server (Node.js process) | Yes | Runs your API/app | ECS Fargate task |
+| App server (Node.js process) | Yes | Runs your API/app | **Mode B:** ECS Fargate task. **Mode A:** Lambda |
 | HTTPS (TLS) | Yes | Security + browser trust + production baseline | ACM cert on ALB, or free with Function URL |
-| Load balancer | Yes | Routing + health checks + safe scaling | ALB (timebox and teardown to control cost) |
+| Load balancer | Yes in Mode B | Routing + health checks + safe scaling | **Mode B:** ALB (~$17/mo on credits). **Mode A:** skip |
 | Reverse proxy | Yes (conceptually) | Routes client requests to app | ALB listener rules, or Function URL |
 | Nginx | Optional | Advanced custom routing/caching when self-managed | Skip initially |
 | Forward proxy | No | Outbound traffic control in enterprise networks | Not required |
-| NAT Gateway | **No** | Private subnet egress | **Never create** (~$32/mo) |
+| NAT Gateway | **No** | Private subnet egress | **Never create** (~$32/mo), both modes |
 
-### Recommended free-plan architecture
+### Mode B architecture (active — credits absorb the ALB)
 
 - Route 53 only if you want a custom domain (~$0.50/mo per hosted zone)
 - **ALB** (HTTPS termination + reverse proxy + load balancing)
 - **ECS Fargate** service running your container
 - CloudWatch (logs with 7-day retention, metrics, alarms)
 
-This is the enterprise-shaped stack for Week 5. Keep it cost-safe by tearing
-down resources after each session and capturing screenshots as you go.
+This is the enterprise-shaped stack. Building it is the point of Week 5 —
+health checks, target groups and blue/green only exist here. Screenshot it as
+you go, because on the Free plan it disappears when credits run out.
+
+### Mode A architecture (fallback — no ALB)
+
+- Lambda Function URL (HTTPS + routing, no ALB)
+- Lambda function running the Node.js app
+- CloudWatch (logs with 7-day retention, metrics, 1 alarm)
+- Route 53 only if you want a custom domain
+
+Same concepts, different price. Blue/green becomes a Lambda alias with weighted
+traffic shifting; health checks become CloudWatch alarms on the alias.
 
 ## Phase 1 — Depth (Weeks 1–8)
 
 ### Week 1 — CI Fundamentals for this repo
 
-All Week 1 execution details, checklists, and evidence live here:
-[`WEEK1_CI_FUNDAMENTALS.md`](./depth/WEEK1_CI_FUNDAMENTALS.md)
+Deliverables:
+
+- [x] Add GitHub Actions workflow for:
+  - [x] Install dependencies
+  - [x] `npm run build`
+  - [x] `npm test`
+- [x] Enable branch protection on `main` requiring passing checks.
+  - Step-by-step UI walkthrough: [`BRANCH_PROTECTION_GUIDE.md`](./BRANCH_PROTECTION_GUIDE.md)
+  - Required status check name for this repo: `build-and-test` (from `.github/workflows/ci.yml`)
+  - Configured via **Rulesets**, targeting the default branch, enforcement `Active`.
+
+- [ ] Save evidence screenshots into `docs/images/`.
+
+Definition of done:
+
+- [x] PR fails if tests/build fail.
+- [x] A green PR can be merged safely.
+- [x] Direct pushes to `main` are blocked.
+
+### Week 1 evidence screenshots
+
+Store screenshots under `docs/images/` and update filenames below as needed.
+
+- PR/check run showing failed build/test:
+  ![Week 1 - Failed CI check](./images/week1-ci-failed.png)
+- PR/check run showing passing build/test:
+  ![Week 1 - Passed CI check](./images/week1-ci-passed.png)
 
 ### Week 2 — Code Quality + Faster Feedback
 
-All Week 2 execution details, checklists, and commands live here:
-[`WEEK2_CODE_QUALITY.md`](./depth/WEEK2_CODE_QUALITY.md)
+Deliverables:
+
+- [x] Add lint script and include in CI.
+  - `eslint.config.js` (flat config, ESLint 9, CommonJS + Node globals)
+  - Scripts: `npm run lint`, `npm run lint:fix`
+  - CI step: **Run lint** (fails the PR on any lint error)
+- [x] Add caching in CI (npm cache via `actions/setup-node`).
+- [x] Add test coverage output.
+  - `npm run test:coverage` → `node --test --experimental-test-coverage`
+  - No extra dependency needed; coverage table prints in the CI log
+- [x] Run `npm install` locally to pull ESLint, then verify `npm run lint` passes.
+- [x] Confirm CI is green with the three new steps.
+
+Definition of done:
+
+- [x] CI runtime reduces after cache warm-up (compare run #1 vs run #2).
+- [x] Coverage summary is visible in the CI log for every PR.
+- [x] A lint error blocks the merge.
+
+Local commands:
+
+```bat
+npm install
+npm run lint
+npm run test:coverage
+```
 
 ### Week 3 — Dockerize the app
 
-All Week 3 execution details, checklists, and commands live here:
-[`WEEK3_DOCKERIZE_APP.md`](./depth/WEEK3_DOCKERIZE_APP.md)
+Deliverables:
+
+- [x] Create `Dockerfile` for production build.
+  - Multi-stage: `deps` (via `npm ci --omit=dev`) → `runtime`
+  - Base image `node:20-alpine`, runs as non-root `USER node`
+  - Built-in `HEALTHCHECK` hitting `/health`
+- [x] Add `.dockerignore` (excludes `node_modules`, `.git`, `docs`, `test`, coverage).
+- [x] Run app from a container — **verified in CI, no local Docker needed**.
+  - New `docker-build` job in `ci.yml`: builds the image, starts it,
+    polls `GET /health` until 200, prints image size, then cleans up.
+- [x] Add `compose.yaml` for optional one-command local runs.
+
+Definition of done:
+
+- [x] `docker-build` job is green on a PR.
+- [x] Smoke test confirms `/health` returns 200 from inside the container.
+- [x] Image contains no dev dependencies (ESLint absent from the runtime stage).
+
+Optional local commands (not required — CI does this for you):
+
+```bat
+docker compose up --build
+curl http://localhost:3000/health
+docker compose down
+```
 
 ### Weeks 4–8 run on AWS — read this once
 
@@ -170,6 +337,7 @@ Weeks 1–3 were local and repeatable. Weeks 4–8 are not:
 
 - On the **Free plan**, the account is restricted when credits run out —
   environments stop existing, and you cannot recreate them for screenshots.
+- On the **Paid plan**, they keep billing instead.
 
 Two habits for every cloud week:
 
@@ -180,19 +348,101 @@ Two habits for every cloud week:
 
 ### Week 4 — AWS Foundation + ECR
 
-All Week 4 execution details, checklists, and troubleshooting live here:
-[`WEEK4_AWS_SETUP.md`](./depth/WEEK4_AWS_SETUP.md)
+**Region: `ap-south-1` (Mumbai).** Full walkthrough: [`WEEK4_AWS_SETUP.md`](./WEEK4_AWS_SETUP.md)
 
-Teardown steps are maintained separately here:
-[`TEARDOWN_RUNBOOK.md`](./depth/TEARDOWN_RUNBOOK.md)
+> ⚠️ **Mode B (active):** credits absorb the cost, but the expiry date is a
+> hard cliff. On the Free plan the account is then restricted; on the Paid plan
+> forgotten resources bill silently. Guardrails go in before any resource is
+> created.
+
+Deliverables:
+
+- [ ] Create AWS account guardrails:
+  - [ ] Zero-spend budget alarm
+  - [ ] $5/month budget with 50/80/100% alerts
+  - [ ] Cost Explorer enabled
+  - [ ] IAM strategy: **GitHub OIDC role, no long-lived access keys**
+- [ ] Create **one** ECR repo (`devops-nodejs-app`) with tag immutability + scan on push.
+- [ ] Add an ECR **lifecycle policy** to keep only the latest 2 images.
+- [ ] Set GitHub Actions variables: `AWS_REGION`, `AWS_ROLE_ARN`, `ECR_REPOSITORY`.
+- [ ] Add `push-to-ecr` CI job (main-only, OIDC, SHA + `latest` tags).
+
+Definition of done:
+
+- [ ] Merging to `main` publishes a SHA-tagged image to ECR.
+- [ ] No AWS access keys stored in GitHub secrets.
+- [ ] ECR storage stays under ~200 MB (cost ≈ $0.02/mo).
+- [ ] Cost Explorer shows < $0.10 for the month.
 
 ### Week 5 — Deploy to the cloud (Staging)
 
-All Week 5 execution details, checklists, and definition of done live here:
-[`WEEK5_ECS_FARGATE_ALB.md`](./depth/WEEK5_ECS_FARGATE_ALB.md)
+Pick **one** path.
+**Mode B is active → take Path B.** It costs credits rather than cash, and
+teaches load balancing, health checks and blue/green properly. Path A stays
+here as the Mode A fallback.
 
-Teardown steps are maintained separately here:
-[`TEARDOWN_RUNBOOK.md`](./depth/TEARDOWN_RUNBOOK.md)
+#### Week 5 app hardening prep (already implemented in code)
+
+- [x] Graceful shutdown on `SIGTERM` / `SIGINT` with drain + forced timeout
+  - `src/graceful-shutdown.js`
+- [x] Readiness vs liveness split
+  - `/ready` returns `503` while draining
+  - `/health` stays cheap and returns `200` while process is alive
+  - `src/index.js`
+- [x] Structured JSON logging (zero dependencies)
+  - `src/index.js`
+- [x] Request IDs generated or propagated from `x-request-id`
+  - `src/index.js`
+- [x] Validated, frozen config (fail fast on bad `PORT`)
+  - `src/runtime-config.js`
+- [x] Crash safety for `unhandledRejection` and `uncaughtException`
+  - `src/crash-safety.js`
+- [x] Version stamping with `APP_VERSION` in logs and `/health`
+  - `src/index.js`
+- [x] Error containment (generic `500`, no stack traces to clients)
+  - `src/index.js`
+- [x] Keep-alive tuning (`keepAliveTimeout` above common ALB idle timeout)
+  - `src/index.js`
+- [x] Docker entrypoint uses `CMD ["node", ...]` (not `npm start`)
+  - `Dockerfile`
+
+#### Path A — Serverless (Mode A fallback, ~$0)
+
+Deliverables:
+
+- [ ] Provision with CDK/Terraform:
+  - [ ] Lambda function running the app handler
+  - [ ] Lambda **Function URL** (HTTPS included, no ALB, no cert to manage)
+  - [ ] CloudWatch log group with 7-day retention
+- [ ] Deploy current build to staging.
+
+#### Path B — ECS Fargate + ALB (recommended in Mode B)
+
+**Mode B:** can stay up for days on credits — take advantage of that.
+**Mode A:** timeboxed session only, ~$0.10 per session.
+
+Deliverables:
+
+- [ ] Provision minimal infrastructure (CDK/Terraform):
+  - [ ] VPC with **public subnets only** (no NAT Gateway)
+  - [ ] ECS cluster + service (0.25 vCPU / 0.5 GB)
+  - [ ] ALB + target group + health checks
+  - [ ] ACM certificate for HTTPS
+- [ ] Deploy current image to staging.
+- [ ] **Mode A:** destroy the stack before ending the session.
+- [ ] **Mode B only** — things a long-lived staging environment makes possible:
+  - [ ] Deploy a deliberately broken image; watch ALB health checks reject it
+  - [ ] Perform a blue/green target-group switch
+  - [ ] Trigger auto-scaling under a `k6` / `autocannon` load test
+  - [ ] Let a CloudWatch alarm fire on real traffic
+  - [ ] Screenshot each of the above **as it happens**
+
+Definition of done:
+
+- [ ] Staging URL is reachable over HTTPS.
+- [ ] Health checks stable.
+- [ ] Evidence captured in `docs/images/`.
+- [ ] Teardown verified — no ALB, no NAT Gateway, no running tasks left.
 
 ### Week 6 — Secrets + Configuration + Security
 
@@ -251,9 +501,10 @@ Deliverables:
 
 - [ ] Add production workflow with manual approval (GitHub **Environments** → required reviewers, free).
 - [ ] Choose deployment strategy:
-  - [ ] ECS blue/green — two target groups, real traffic switch,
-    health-check-gated.
-- [ ] Document rollback runbook in [`ROLLBACK_RUNBOOK.md`](./depth/ROLLBACK_RUNBOOK.md).
+  - [ ] **Mode B (active): ECS blue/green** — two target groups, real traffic
+        switch, health-check-gated. This is the version worth demonstrating.
+  - [ ] Mode A fallback: **Lambda alias + weighted traffic shifting** (costs $0)
+- [ ] Document rollback runbook in [`ROLLBACK_RUNBOOK.md`](./ROLLBACK_RUNBOOK.md).
 - [ ] Screenshot the blue/green switch **while it is happening** — it cannot be
       recreated after teardown.
 
@@ -273,7 +524,7 @@ Deliverables:
   - [ ] Concurrency (Lambda) or CPU/memory (ECS)
 - [ ] **One** alarm + SNS email notification.
 - [ ] Set log group retention to **7 days** (default is "never expire" and bills forever).
-- [ ] Postmortem template ready: [`POSTMORTEM_SAMPLE.md`](./depth/POSTMORTEM_SAMPLE.md).
+- [ ] Postmortem template ready: [`POSTMORTEM_SAMPLE.md`](./POSTMORTEM_SAMPLE.md).
 - [ ] Run one simulated incident and write up the real postmortem.
 - [ ] Screenshot the dashboard and the firing alarm before teardown.
 
@@ -281,7 +532,7 @@ Definition of done:
 
 - [ ] You can detect, diagnose, and recover from a bad release.
 - [ ] Total monthly observability cost stays under ~$0.20.
-- [ ] Full teardown scheduled before credits expire.
+- [ ] **Mode B:** full teardown scheduled before credits expire.
 - [ ] All AWS evidence saved in `docs/images/` — the account can now be
       restricted or closed without losing your portfolio.
 
@@ -423,24 +674,26 @@ Definition of done:
 
 ## Cost-Safe Learning Checklist (Important)
 
-Full detail: [`COST_CONTROL.md`](./depth/COST_CONTROL.md)
+Full detail: [`COST_CONTROL.md`](./COST_CONTROL.md)
 
 Before provisioning:
 
-- [x] Zero-spend budget + $5 budget alerts created
-- [x] Cost Explorer enabled
-- [x] Tags planned: `project=devops-learning`, `env=dev/staging`
-- [x] Credit expiry date recorded + calendar reminder set
+- [ ] Cost mode chosen (A — budget, or B — credit)
+- [ ] Zero-spend budget + $5 budget alerts created
+- [ ] Cost Explorer enabled
+- [ ] Tags planned: `project=devops-learning`, `env=dev/staging`
+- [ ] **Mode B:** credit expiry date recorded + calendar reminder set
 
 While building:
 
+- [ ] **Mode A:** prefer serverless (Lambda) over always-on compute
 - [ ] Smallest instance/task sizes only
-- [ ] **No NAT Gateway** — public subnets only
-- [ ] No always-on ALB
+- [ ] **No NAT Gateway** — public subnets only (both modes)
+- [ ] **Mode A:** no always-on ALB
 - [ ] SSM Parameter Store (free) over Secrets Manager
 - [ ] Log retention set to 7 days
 - [ ] Public GitHub repo → free unlimited Actions minutes
-- [ ] Check credit burn weekly
+- [ ] **Mode B:** check credit burn weekly
 
 End of every session (teardown):
 
@@ -449,7 +702,7 @@ End of every session (teardown):
 - [ ] No unattached Elastic IPs or `available` EBS volumes
 - [ ] ECR holds ≤ 2 images
 - [ ] Check Cost Explorer for today's spend
-- [ ] Confirm nothing will outlive the credits
+- [ ] **Mode B:** confirm nothing will outlive the credits
 
 ## Portfolio Output (for interviews)
 
@@ -492,6 +745,8 @@ If you can explain *why* you chose each design, you're operating at senior level
 | Monitoring, alarms, postmortem | Yes | Week 8 |
 | HTTPS/TLS certificate | Yes | Week 5 (Function URL, or ACM on ALB) |
 | Cost guardrails | Yes | Week 4 + `COST_CONTROL.md` |
+| Running without a free tier | Yes | Mode A + `COST_CONTROL.md` |
+| Running on sign-up credits | Yes | Mode B |
 | Local dev parity | Partial | Week 3 (container run) |
 | Load/performance testing | Yes | Week 11 |
 | Multi-environment promotion (dev→staging→prod) | Partial | Weeks 5 + 7 |
@@ -513,7 +768,12 @@ Roughly half the remaining work needs no cloud and costs nothing:
 
 | Task | Week |
 |---|---|
-| Load testing baseline | Stretch ([template](./LOAD_TEST_BASELINE.md)) |
+| Dependency audit, image scan, SBOM, SAST, secret scan | 6 |
+| Automated dependency updates | 6 |
+| Rollback runbook | 7 |
+| Postmortem template | 8 |
+| App hardening (graceful shutdown, structured logs, env config) | 5 prep |
+| Load testing baseline | Stretch |
 | Write IaC and validate with `cdk synth` / `terraform validate` (no credentials needed) | 5 |
 
 Only these genuinely require AWS: ECR push, Lambda/ECS deploy, SSM parameters,
@@ -522,7 +782,7 @@ CloudWatch dashboards and alarms.
 ## Glossary
 
 Short definitions for every acronym in this plan. Full detail:
-[`GLOSSARY.md`](./depth/GLOSSARY.md)
+[`GLOSSARY.md`](./GLOSSARY.md)
 
 ### AWS
 
@@ -605,14 +865,14 @@ Short definitions for every acronym in this plan. Full detail:
 | **Dependabot** | Opens PRs when dependencies have updates |
 | **ESLint** | Finds bugs and style problems in JavaScript |
 
-## Maturity Gap Analysis
+# Archived Backup
 
-Full backlog lives in [`MATURITY_GAP_ANALYSIS.md`](./depth/MATURITY_GAP_ANALYSIS.md).
+This file is intentionally archived and not maintained.
 
-## Weekly working rhythm
+Use these active docs instead:
 
-1. Read the week's deliverables.
-2. Do the work on a feature branch.
-3. Open a PR and let CI validate it.
-4. Tick the checkboxes and update the Progress Tracker.
-5. Save a screenshot as evidence in `docs/images/`.
+- Main roadmap: [`docs/README.md`](../README.md)
+- Cost guardrails: [`COST_CONTROL.md`](./COST_CONTROL.md)
+- Week 4 execution runbook: [`WEEK4_AWS_SETUP.md`](./WEEK4_AWS_SETUP.md)
+
+> Kept only for historical reference.

@@ -2,7 +2,11 @@ const js = require('@eslint/js');
 
 module.exports = [
   {
-    ignores: ['node_modules/**', 'coverage/**', 'dist/**'],
+    ignores: [
+      'node_modules/**',
+      'coverage/**',
+      'dist/**',
+    ],
   },
   js.configs.recommended,
   {
@@ -20,6 +24,8 @@ module.exports = [
         __dirname: 'readonly',
         __filename: 'readonly',
         Buffer: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',

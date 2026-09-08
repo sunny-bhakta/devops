@@ -7,13 +7,18 @@
     "start": "node src/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "node --check src/index.js && node --check test/index.test.js",
-    "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage"
+    "build": "node --check src/index.js",
+    "test": "node --test test/index.test.js test/graceful-shutdown.test.js test/runtime-config.test.js test/crash-safety.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/index.test.js test/graceful-shutdown.test.js test/runtime-config.test.js test/crash-safety.test.js"
+  },
+  "dependencies": {
+    "autocannon": "^8.0.0",
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
-    "eslint": "^9.13.0"
+    "eslint": "^9.13.0",
+    "supertest": "^7.1.4"
   },
   "keywords": [
     "nodejs",
